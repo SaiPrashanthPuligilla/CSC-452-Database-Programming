@@ -1,0 +1,136 @@
+1)
+accept emp_id prompt 'Please enter the employee ID:';
+declare
+e_id number :=&emp_id;
+e_name employee.employee_name%type ;
+e_job employee.job%type;
+hire_date varchar2(20);
+salary varchar2(20);
+commission varchar2(20);
+total_pay varchar2(20);
+m_name employee.employee_name%type;
+m_hire_date varchar2(20);
+dpt_name department.department_name%type;
+n number;
+begin
+select count(*) into n from employee 
+where employee_id=e_id;
+if n != 1 then 
+dbms_output.put_line('employee ID '||e_id|| ' is not in the table');
+else
+select emp.employee_name,emp.job,nvl(to_char(emp.hire_date,'mm/dd/yyyy'),'*****'),
+to_char(Emp.Salary,'$9,990.00'),to_char(nvl(Emp.Commission,0),'$9,990.00'),
+to_char(emp.salary + nvl(emp.commission,0),'$9990.00'),
+nvl(emp1.employee_name,'*****'),nvl(to_char(emp1.hire_date,'mm/dd/yyyy'),'*****'),
+nvl(dpt.department_name,'*****')
+into
+e_name,e_job,hire_Date,salary,commission,
+total_pay,m_name,m_hire_date,dpt_name
+from 
+employee emp left outer join employee emp1 
+On emp.manager_id = emp1.employee_id
+left join department dpt
+on dpt.department_id = emp.department_id
+where
+emp.employee_id = e_id
+order by emp.employee_name;
+dbms_output.put_line('====== Employee ======');
+dbms_output.put_line('Name:             ' ||e_name);
+dbms_output.put_line('Job:              '||e_job);
+dbms_output.put_line('Hire date:        '||hire_date);
+dbms_output.put_line('Salary:          '       ||salary);
+dbms_output.put_line('Commission:    '    ||commission);
+dbms_output.put_line('Total Pay:       '     ||total_pay);
+dbms_output.put_line('====== Department ======');
+dbms_output.put_line('Department Name:  ' ||dpt_name);
+dbms_output.put_line('====== Manager ======');
+dbms_output.put_line('Manager Name:     '    ||m_name);
+dbms_output.put_line('Manager Hire Date:'||m_hire_date);
+end if;
+end;
+===========================================================
+2)
+accept d_n prompt 'Please enter the department name:';
+declare
+dpt_name department.department_name%type:= '&d_n';
+dpt_id department.department_id%type;
+dpt_address department.address%type;
+num_emp_dpt number;
+min_sal varchar2(20);
+max_sal varchar2(20);
+avg_sal varchar2(20);
+num_sal_gtr_avg_dpt varchar2(20);
+num_sal_gtr_avg_comp varchar2(20);
+xyz number;
+begin
+select count(Department_Id) into xyz 
+from department
+where UPPER(department_name) = UPPER(dpt_name);
+if xyz != 1 then
+Dbms_Output.Put_Line('Department ' || to_char(dpt_name)|| ' is not in the table.');
+else
+select distinct dpt.department_id, dpt.address,(select count(employee_id) from employee where dpt.department_id = department_id),
+ (select trim(to_char(nvl(min(salary),0), '$9,990.00')) from employee where department_id = dpt.department_id),
+ (select trim(to_char(nvl(max(salary),0), '$9,990.00')) from employee where department_id = dpt.department_id),
+ (select trim(to_char(nvl(avg(salary),0), '$9,990.00')) from employee where department_id = dpt.department_id),
+ (select count(employee_id) from employee where department_id=dpt.department_id and salary > (select avg(salary) from employee where department_id=dpt.department_id )),
+ (select count(employee_id) from employee where department_id=dpt.department_id and salary > (select avg(salary) from employee))
+ into
+dpt_id,
+dpt_address,
+num_emp_dpt,
+min_sal,
+max_sal,
+avg_sal,
+num_sal_gtr_avg_dpt,
+num_sal_gtr_avg_comp
+from 
+department dpt, employee emp
+where (dpt.department_id = emp.department_id OR emp.department_id IS NULL)
+and upper(dpt.department_name) = upper(dpt_name);
+dbms_output.put_line('Department name:'||upper(dpt_name));
+dbms_output.put_line('a)'||dpt_id);
+dbms_output.put_line('b)'||dpt_address);
+dbms_output.put_line('c)'||num_emp_dpt);
+dbms_output.put_line('d)'||min_sal);
+dbms_output.put_line('e)'||max_sal);
+dbms_output.put_line('f)'||avg_sal);
+dbms_output.put_line('g)'||num_sal_gtr_avg_dpt);
+dbms_output.put_line('h)'||num_sal_gtr_avg_comp);
+end if;
+end;
+===========================================================
+3)
+accept p_1 prompt 'Enter a number between 33 and 66:';
+declare 
+x integer;
+y integer;
+z integer;
+i integer :=&p_1;
+begin
+if i<33 then
+dbms_output.put_line('invalid number:'||i);
+elsif i>66 then
+dbms_output.put_line('invalid number:'||i);
+else
+if i is not null then
+  if  i=0 then 
+    x:=0;
+  elsif i=1 then
+  x:=1;
+else 
+y:=0;
+z:=1;
+For fib in 2..i+2 loop
+            x:=y+z;
+            y:=z;
+            z:=x;
+            if fib = i-2 or fib = i or fib = i+2 then
+              dbms_output.put_line('f('||fib||')='||x);
+            else continue;
+          end if;
+        end loop;
+    end if;
+  end if;
+  end if;
+  end;

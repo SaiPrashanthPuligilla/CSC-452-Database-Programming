@@ -1,0 +1,40 @@
+=====================
+Part II
+=====================
+1)
+select distinct job, TO_CHAR((Min(salary + nvl(commission,0))) ,'$9,990.00') as minimum_Total_pay, count(JOB) as total_number_of_employees 
+from EMPLOYEE
+group by job
+order by job ASC;
+
+2)
+SELECT w.employee_name, TO_CHAR((w.salary) ,'$9,990.00') as salary,TO_CHAR(w.hire_date, 'DD-MON-YYYY') as hire_date,
+NVL(TO_CHAR(m.employee_name), '*****') AS employee_name,NVL(TO_CHAR(m.hire_date, 'DD-MON-YYYY'), '01-JAN-3000') as employee_hire_date 
+FROM employee w, employee m 
+WHERE w.manager_id = m.employee_id(+) 
+order by w.EMPLOYEE_NAME;
+
+3)
+SELECT d.department_id, d.department_name,employee_id,employee_name, job as employee_job,hire_date 
+    from DEPARTMENT d inner join employee e 
+    on e.department_id = d.department_id inner join
+    (select employee.department_id, max(hire_date) as datemax 
+    from EMPLOYEE 
+    group by employee.department_id) x  
+    on  e.department_id=x.department_id 
+    and e.hire_date = x.datemax     
+    order by d.department_name,e.EMPLOYEE_NAME asc;
+
+=======================
+Part III
+=======================
+1)
+
+Select g.Grocery_Id,
+       To_CHAR((g.Price_In_2012),'$9,990.00') As Price_In_2012,
+       To_CHAR((g.Price_In_2022),'$9,990.00') As Price_In_2022,
+       TO_CHAR((((g.Price_In_2022-g.Price_In_2012)/g.Price_In_2012)*100),'9,990') || '%' As highest_percentage_increase
+From Grocery_Price g, (select grocery_id from grocery_price where ((PRICE_IN_2022 - PRICE_IN_2012) / PRICE_IN_2012) * 100 = 
+(SELECT max(((PRICE_IN_2022 - PRICE_IN_2012) / PRICE_IN_2012) * 100) FROM GROCERY_PRICE) group by grocery_id) x
+where g.grocery_id = x.grocery_id
+order by g.grocery_id;

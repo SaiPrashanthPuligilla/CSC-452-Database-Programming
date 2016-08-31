@@ -1,0 +1,79 @@
+1)
+create or replace trigger emp_dept_trg
+after insert or update on employee
+for each row
+declare
+  department_id EMPLOYEE.department_id%TYPE;
+  employee_name EMPLOYEE.EMPLOYEE_NAME%TYPE;
+  department_name	DEPARTMENT.department_name%TYPE;
+  old_department_name	DEPARTMENT.department_name%TYPE;
+  old_department_id NUMBER;
+  new_department_id NUMBER;
+begin
+  if inserting then
+  if :new.department_id is null then 
+  insert into emp_dept_info values( :new.employee_Id, :new.employee_name, 'N/A' ,'TBA', sysdate);
+  else
+  select department_name into department_name from department where department_id = :new.department_id;
+  insert into emp_dept_info values( :new.employee_Id, :new.employee_name, 'N/A' , department_name, sysdate);
+  end if;
+  else
+  dbms_output.put_line('old :' || :OLD.department_id);
+  dbms_output.put_line('new :' || :new.department_id);    
+  old_department_id := :OLD.department_id;
+  if :OLD.department_id is null then
+  old_department_id := 0;  
+  end if;      
+  new_department_id := :new.department_id;
+  if :new.department_id is null then
+  new_department_id := 0; 
+  end if;    
+  if old_department_id != new_department_id then
+  if :OLD.department_id is not null OR :new.department_id is not null then
+  if :new.department_id is not null then
+  select department_name into department_name from department where department_id = :new.department_id;
+  end if;
+  if :old.department_id is not null then
+  select department_name into old_department_name  from	department  where department_id = :old.department_id;
+  end if;          
+  if :old.department_id is null then
+  insert into emp_dept_info values( :new.employee_Id, :new.employee_name, 'TBA' ,department_name, sysdate);
+  elsif :new.department_id is null then
+  insert into emp_dept_info values( :new.employee_Id, :new.employee_name, old_department_name ,'TBA', sysdate);
+  end if;
+  end if;
+  end if;
+  end if;
+end;
+======================================================================================================
+2)
+create or replace trigger min_sal_trg 
+before insert or update of salary on employee
+for each row
+declare
+v_min_sal number;
+v_job varchar2(50);
+v_n number;
+begin
+select count(*) into v_n from minimum_salary where lower(job) = lower(:new.job);
+if v_n > 0 then 
+dbms_output.put_line('abc');
+select minimum_Salary into v_min_sal from minimum_salary  where lower(job) = lower(:new.job);
+else 
+dbms_output.put_line('456');
+select minimum_Salary into v_min_sal from minimum_salary where  lower(job) = lower('default');
+end if;
+if :new.salary < v_min_sal then 
+:new.salary := v_min_sal;
+dbms_output.put_line('xyz');
+end if;
+exception when no_data_found then
+null;
+end;
+-------------------------------------
+
+INSERT INTO employee 
+VALUES(8017, 'PRASHANTH',  'tbasbbs',  NULL,   '22-AUG-13', 1200, NULL, 40);
+
+INSERT INTO employee 
+VALUES(8017, 'sai',  'programmer',  NULL,   '22-AUG-13', 200, NULL, 40);

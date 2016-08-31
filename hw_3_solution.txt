@@ -1,0 +1,89 @@
+1)
+accept num prompt 'please enter a positive integer'
+declare
+n number :=&num;
+cursor cursor1 is 
+select * from
+(select p_n.rank,p_n.male_given_name,p_n.male_number,p_n.female_given_name,p_n.female_number
+from popular_names p_n
+order by p_n.rank) 
+where rownum <= n
+order by rank desc;
+begin
+if n <=0 then
+dbms_output.put_line('invalid number');
+else
+
+dbms_output.put_line('Rank      Female_Given_Name <No Of occ>              Male_given_name <no of occ>');
+for numid in cursor1 loop
+dbms_output.put_line(lpad(numid.rank,4)||'             '||lpad(numid.female_given_name,10)||'  <'||lpad(numid.female_number,9)||'>                   ' || lpad(numid.male_given_name,7) || '   <' || lpad(numid.male_number,8) || '>');
+end loop;
+
+
+end if;
+end;
+=========================================================================================
+2)
+declare
+emp_count  number;
+avg_sal varchar2(10);
+avg_sal2 varchar2(10);
+avg_num_sal NUMBER;
+  
+ cursor cursor2 is
+      select dpt.department_name, count(emp.employee_id) as emp_dpt_count,to_char(avg(emp.salary),'$9,990.00') as avg_sal
+      from department dpt, employee emp
+      where emp.department_id=dpt.department_id and (select avg(salary) from employee where department_id= dpt.department_id) > avg_num_sal
+      group by dpt.department_name
+      order by dpt.department_name;
+begin
+open cursor2;
+fetch cursor2 into
+emp_count,
+avg_sal,
+avg_sal2,
+avg_num_sal
+if cursor2%notfound then
+dbms_output.put_line('no output');
+else           
+      dbms_output.put_line('Number of employees:                                              '||emp_count);
+      dbms_output.put_line('Company Average Salary:                                   '||avg_sal);
+      dbms_output.put_line('Company Average Salary (85%):                             '||avg_sal2);
+      dbms_output.put_line('---------------------------------------------------------------------');
+      
+      FOR numid in cursor2 LOOP
+        dbms_output.put_line('Department Name:                                          '||lpad(numid.department_name,10));
+        dbms_output.put_line('Number of Employees:                                               '||numid.emp_dpt_count);
+        dbms_output.put_line('Average Salary:                                           '|| numid.avg_sal);
+        dbms_output.put_line('---------------------------------------------------------------------');
+        
+      END LOOP;  
+END;
+==================================================================================================================
+3)
+declare 
+cursor cursor3 is
+select distinct a.vin, 
+min(a.service_date) as f_s_d,max(a.service_date) as l_s_d,
+to_char(sum(a.service_price),'$9,990.00') as t_p,
+to_char(avg(a.service_price),'$9,990.00') as a_p,
+to_char(min(a.service_price),'$9,990.00') as min_p,
+to_char(max(a.service_price),'$9,990.00') as max_p,
+(select service_date from auto_service where vin=a.vin and service_price=(select min(service_price) from auto_service where vin=a.vin)) as s_d_o_min_p,
+(select service_date from auto_service where vin=a.vin and service_price=(select max(service_price) from auto_service where vin=a.vin)) as s_d_o_max_p,
+(select to_char(service_price,'$9,990.00') from auto_service where vin = a.vin and service_date = (select min(service_date) from auto_service where vin = a.vin )) as p_f_f_s,
+(select to_char(service_price,'$9,990.00') from auto_service where vin = a.vin and service_date = (select max(service_date) from auto_service where vin = a.vin) )as l_s_p,
+count(a.service_id) as no_of_s
+from auto_service a
+group by a.vin
+order by vin;
+ 
+begin 
+dbms_output.put_line('VIN       First Service Date(Price)    Last Service Date(Price)   # of Services  Total Price   Average Price      Min Price(service date)     Max Price(service date)');
+dbms_output.put_line('==============================================================================================================================================================================');
+for numid in cursor3 loop
+dbms_output.put_line(numid.VIN ||'       '|| numid.f_s_d ||'(' || lpad(numid.P_f_f_s, 11) || ')      ' || numid.l_s_d || '(' 
+|| lpad(numid.l_s_p, 11) || ')        ' || lpad(numid.no_of_s, 8) || lpad(numid.t_p, 13) || '       ' || lpad(numid.a_p, 9) || '       ' || 
+numid.Min_P ||' ('|| numid.s_d_o_min_p|| ')       ' || numid.Max_P || ' ('|| numid.s_d_o_max_p|| ')');
+  END LOOP;
+END;

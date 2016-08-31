@@ -1,0 +1,84 @@
+1b)
+Declare
+dpt_avg_sal employee.salary%type;
+n number;
+output varchar2(300);
+cursor c1 is
+Select dpt.department_id,dpt.department_name
+from department dpt
+order by dpt.department_name;
+cursor c2 (c2_dpt_id number) is
+Select emp.employee_name,emp.salary
+from employee emp 
+where emp.department_id = c2_dpt_id  and 
+salary > 0.90 *(select avg(salary) from employee where department_id = c2_dpt_id)
+order by employee_name asc; 
+
+begin
+dbms_output.put_line('DEPARTMENT_NAME       AVERAGE_SALARY       90%_AVERAGE_SALARY    EMPLOYEE_NAME');
+dbms_output.put_line('----------------------------------------------------------------------------------------------------------------------');
+   
+for i in c1 loop
+      output := '';
+      select avg(salary)
+      into dpt_avg_sal
+      from employee
+      where department_id = i.department_id;
+     
+      select count(*)
+      into n
+      from employee
+      where department_id = i.department_id and salary > 0.90 * dpt_avg_sal;
+if dpt_avg_sal > 0.90 * dpt_avg_sal and n > 2 then
+for j in c2 (i.department_id)loop
+output := output || trim(j.employee_name)|| ' (' || trim(to_char(j.salary,'$99,990.00'))||') ';
+end loop;
+dbms_output.put_line( rpad(i.department_name,12) || LPAD(to_char(dpt_avg_sal,'$99,990.00'),22) ||LPAD(to_char(0.9 * dpt_avg_sal,'$99,990.00'),26)||'    ' ||output);
+end if;
+ 
+ end loop;
+ 
+end;
+===========================================================================================================================================
+2b)
+accept p_1 prompt 'Please enter the region name(CHILD_NAME):'
+declare
+  v_rname region.child_name%TYPE := '&p_1';
+  v_parent  region.parent_name%TYPE;    
+  v_child Region.Child_Name%type;
+  v_n    NUMBER:=1;
+  v_number NUMBER:=1;
+  v_count number;
+  v_output VARCHAR2(300);
+cursor c_1 (child region.child_name%TYPE) IS
+select parent_name
+from region 
+where upper(child_name) = upper(child) and ROWNUM <2  
+group by parent_name;  
+begin
+  select count(*)into v_count from region
+  where upper(child_name) = upper(v_rname);
+dbms_output.put_line('My input:');
+dbms_output.put_line(upper(v_rname));
+if v_count=0 then
+dbms_output.put_line('My Output:');
+dbms_output.put_line(upper(v_rname)||' is not in the table');
+else
+    v_parent := v_rname;
+    v_output := '(1)'||'[' || UPPER(v_parent) || ']';
+    while v_parent is not null and v_number != 0 loop
+select count(*)into v_number from region
+ where upper(child_name) = upper(v_parent);
+for idx in c_1 (v_parent) loop
+if idx.parent_name is not null then
+v_n := v_n + 1;
+v_output := v_output || '-->'||'(' || TO_CHAR(v_n) || ')'||'['|| UPPER(idx.parent_name)|| ']' ;
+end if;
+v_parent := idx.parent_name;
+end loop;
+END LOOP;
+DBMS_OUTPUT.PUT_LINE('NUMBER OF REGION NAMES: ' || TO_CHAR(v_n));
+DBMS_OUTPUT.PUT_LINE(v_output);
+end if;
+
+end;

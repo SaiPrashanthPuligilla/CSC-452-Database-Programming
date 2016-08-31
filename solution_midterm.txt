@@ -1,0 +1,185 @@
+Part I
+============================
+1)False
+2)C
+3)D
+4)D
+5)D
+6)C
+7)C
+8)D
+9)D
+10)B
+11)C1
+12)B
+
+Part II
+==============================
+1b)
+accept p_1 Prompt 'Please enter an integer (1-12):'
+declare
+v_n number := &p_1;
+v_month number;
+v_day number;
+v_rank number;
+v_max_rank1 number;
+v_min_rank1 number;
+v_max_rank2 number;
+v_min_rank2 number;
+cursor c_1 is
+select day,rank from birthday_distribution where month = v_n order by day;
+begin
+ if v_n <= 0 or v_n > 12 then 
+ dbms_output.put_line('Invalid number!');
+ else
+ open c_1;
+ dbms_output.put_line('User Input: ' || v_n);
+ dbms_output.put_line('----------------------------------------');
+ dbms_output.put_line('Day   Rank');
+ dbms_output.put_line('----------------------------------------');
+ fetch c_1 into v_day,v_rank;
+ select max(rank) into v_max_rank1
+ from birthday_distribution
+ where month = v_n ;
+ select max(rank)
+ into v_max_rank2
+ from birthday_distribution
+ where month = v_n and rank < ( select max(rank) from birthday_distribution where month = v_n);
+ select min(rank)
+ into v_min_rank1
+ from birthday_distribution
+ where month = v_n;
+ select min(rank)
+ into v_min_rank2
+ from birthday_distribution
+ where month = v_n and rank > ( select min(rank) from birthday_distribution where month = v_n);
+ while c_1%found loop
+ if (v_rank = v_max_rank1) then
+ dbms_output.put_line( LPAD(v_day,2) ||'  ' || LPAD(v_rank,5)|| ' *** 1st Least Popular Day');
+ elsif (v_rank = v_max_rank2) then
+ dbms_output.put_line( LPAD(v_day,2) ||'  ' || LPAD(v_rank,5)|| ' *** 2nd Least Popular Day');
+ elsif (v_rank = v_min_rank1) then
+ dbms_output.put_line( LPAD(v_day,2) ||'  ' || LPAD(v_rank,5)|| ' *** 1st Most Popular Day');
+ elsif (v_rank = v_min_rank2) then
+ dbms_output.put_line( LPAD(v_day,2) ||'  ' || LPAD(v_rank,5)|| ' *** 2nd Most Popular Day');
+ else
+ dbms_output.put_line( LPAD(v_day,2) ||'  ' || LPAD(v_rank,5));
+ end if;
+ fetch c_1 into v_day,v_rank;
+ end loop;
+ close c_1;
+ end if;
+end;
+========================================================================================
+2)
+accept name prompt'Please enter the last name here:'
+declare
+user_input hr_person.last_name%TYPE := '&name';
+last_name hr_person.last_name%TYPE;
+first_name hr_person.first_name%TYPE;
+job hr_person.job_type%TYPE;
+j_status hr_person.job_status%TYPE;
+hire_date hr_person.hire_date%TYPE;
+pilot_type hr_pilot.pilot_type%TYPE;
+job_type varchar2(10);
+job_status varchar2(10);
+cursor c_1 is
+select person.last_name, person.first_name, person.job_type, person.job_status,person.hire_date,pilot.pilot_type 
+from hr_person person,hr_pilot pilot
+where person.person_id  = pilot.person_id (+)
+order by person.job_status,person.last_name, person.first_name, person.job_type, person.hire_date;
+
+begin
+dbms_output.put_line(RPAD('JOB STATUS', 15) ||RPAD('EMPLOYEE NAME', 22) || RPAD('JOB TYPE', 15) ||  RPAD('HIRE DATE', 15) || RPAD('PILOT TYPE', 25));
+dbms_output.put_line('-----------------------------------------------------------------------------------------');
+ select last_name
+ into last_name
+ from hr_person
+ where  UPPER(last_name) = UPPER(user_input)
+ group by last_name;
+ open c_1;
+loop
+fetch c_1 into last_name, first_name,job,j_status,hire_date,pilot_type;
+exit when c_1%NOTFOUND ;
+if(job='FT') then job_type:='Full-Time';
+elsif(job='PT') then job_type:='Part-Time';
+end if;
+if (j_status='A') then job_status:='Active';
+elsif (j_status='I') then job_status:='Inactive';
+end if;
+if(pilot_type IS NULL) then pilot_type:='------';
+end if; 
+if UPPER(last_name)  = UPPER(user_input) then
+dbms_output.put_line(RPAD(job_status,15) ||(RPAD(last_name||', '||first_name,22)) || RPAD(job_type,15) ||  RPAD(hire_date,15) || RPAD(pilot_type,25));
+end if;
+end loop;
+exception 
+when no_data_found then 
+open c_1;
+loop
+fetch c_1 into last_name, first_name,job,j_status,hire_date,pilot_type;
+exit when c_1%NOTFOUND ;
+if(job='FT') then job_type:='Full-Time';
+elsif(job='PT') then job_type:='Part-Time';
+end if;
+if (j_status='A') then job_status:='Active';
+elsif (j_status='I') then job_status:='Inactive';
+end if;
+if(pilot_type IS NULL) then pilot_type:='------';
+end if;
+dbms_output.put_line(RPAD(job_status,15) ||(RPAD(last_name||', '||first_name,22))  || RPAD(job_type,15) ||  RPAD(hire_date,15) || RPAD(pilot_type,25));
+   end loop;
+ close c_1;
+ end;
+====================================================================================
+3b)
+declare
+h_date employee.hire_date%TYPE;
+e_name employee.employee_name%TYPE;
+j_job employee.job%TYPE;
+dpt_id employee.department_id%TYPE;
+dpt_name department.department_name%TYPE;
+mng_id employee.manager_id%TYPE;
+mng_name employee.employee_name%TYPE;
+m_day VARCHAR2(10);
+tmp_day VARCHAR2(10);
+max_count integer;
+counter integer;
+cursor c_1 is Select hire_date, employee_name, job, department_id, manager_id, TO_CHAR(hire_date, 'DAY') as "Day_Of_Week" 
+from employee
+where TO_CHAR(hire_date, 'Day') IN( Select TO_CHAR(hire_date, 'Day') 
+ From employee group by TO_CHAR(hire_date, 'Day') 
+ having count(*) = (Select max(count(*)) 
+  From employee Group by TO_CHAR(hire_date,'Day')))
+  Order by "Day_Of_Week" DESC, hire_date;
+begin
+Select max(count(*)) 
+ into max_count 
+ from employee 
+ group by TO_CHAR(hire_date,'Day');
+open c_1;
+tmp_day := 'temp';
+counter := 0;
+loop
+fetch c_1 into h_date,e_name,j_job,dpt_id,mng_id,m_day;
+exit when c_1%NOTFOUND;
+if (tmp_day <> m_day) then
+ tmp_day := m_day;
+   if(counter <> 0) then
+ dbms_output.put_line('===========================================================================');
+ end if;
+ counter := 1;
+ dbms_output.put_line(m_day ||'(' || max_count || ' employees)');
+ dbms_output.put_line(RPAD('HIRE_DATE',15)|| RPAD('NAME',10) || RPAD('JOB',25) || RPAD('DEPARTMENT',15) || RPAD('MANAGER',10));
+ dbms_output.put_line('--------------------------------------------------------------------------');
+end if;
+if dpt_id is not null then
+select NVL(department_name,'------') into dpt_name from department where department_id=dpt_id;
+else dpt_name :='------';
+end if;
+if mng_id is not null then select employee_name into mng_name from employee where employee_id=mng_id;
+else mng_name :='------';
+end if;
+dbms_output.put_line(RPAD(h_date,15) || RPAD(e_name,10)|| RPAD(j_job,25) || RPAD(dpt_name,15)  || RPAD(mng_name,10));
+end loop;
+end;

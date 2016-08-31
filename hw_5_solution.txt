@@ -1,0 +1,93 @@
+2)
+create or replace procedure user_login
+(    
+p_user_id number,
+p_password varchar2,
+p_ret_code out number
+)
+as
+n number;
+islocked_out char;
+pwd varchar2(40);
+failed_pwd_count number;
+begin
+select count(*) into n from hr_users where user_id = p_user_id;
+if n = 0 then
+p_ret_code :=0;
+else
+select is_locked_out,password,failed_password_attempt_count
+into  islocked_out,pwd,failed_pwd_count
+from hr_users where user_id = p_user_id;
+if islocked_out = 'Y' then p_ret_code :=-10;
+elsif p_password = pwd then 
+update hr_users set last_successful_login_time = sysdate,failed_password_attempt_count=0,
+last_failed_login_time =null where user_id =p_user_id;
+
+p_ret_code :=1;
+elsif failed_pwd_count !=5 then 
+update hr_users set failed_password_attempt_count = failed_password_Attempt_count+1,
+last_failed_login_time = sysdate where user_id = p_user_id;
+
+p_ret_code := -1;
+elsif failed_pwd_count = 5 then 
+update hr_users set failed_password_attempt_count = failed_password_attempt_count+1,last_failed_login_time= sysdate,
+is_locked_out='Y',last_locked_out_time = sysdate where user_id = p_user_id;
+
+p_ret_code := -10;
+end if;
+end if;
+end;
+-----------------------
+test using following block
+declare 
+v_n number;
+begin
+user_login(82003,'gc88Wmvpx8',v_n);
+dbms_output.put_line(v_n);
+end;
+
+==========================================================================================================
+3)
+create or replace procedure reset_password
+(
+p_user_id number,
+p_current_password varchar2,
+P_new_password varchar2,
+p_ret_code out number
+)
+as
+n number;
+pwd varchar2(40);
+begin
+select count(*) into n from hr_users where user_id = p_user_id;
+if n = 0 then p_ret_code :=-10;
+else 
+select password into pwd from hr_users where user_id = p_user_id;
+if p_current_password != pwd then p_ret_code := -20;
+  elsif p_new_password = pwd then p_ret_code := -30;
+  elsif length(p_new_password) < 10 or length(p_new_password)>30 then p_ret_code := -40;
+else
+ select count(*) into n from dual where regexp_like(p_new_password,'[A-Z]');
+ if n = 0 then p_ret_code := -50;
+  else 
+  select count(*) into n from dual where regexp_like(p_new_password,'[a-z]');
+   if n = 0 then p_ret_code := -60;
+    else
+    select count(*) into n from dual where regexp_like (p_new_password,'[0-9]');
+     if n = 0 then p_ret_code := -70;
+else 
+update hr_users set password = p_new_password,last_password_changed_time = sysdate where user_id = p_user_id;
+p_ret_code :=1;
+end if;
+end if;
+end if;
+end if;
+end if;
+end;
+--------------------------------------------------------------------------------------------------------------
+declare 
+v_n number;
+begin 
+reset_password(82004,'KcxweSYg555','KcxweSYg555',v_n);
+dbms_output.put_line(v_n);
+end;
